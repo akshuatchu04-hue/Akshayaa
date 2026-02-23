@@ -1,0 +1,7 @@
+{
+  "name": "Fruit Vitality",
+  "description": "Automated fruit quality grading system using AI to assess freshness based on visual features.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
