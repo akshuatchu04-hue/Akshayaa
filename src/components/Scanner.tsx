@@ -139,7 +139,26 @@ export function Scanner() {
                 </div>
               </div>
             ) : image ? (
-              <img src={image} alt="Selected fruit" className="w-full h-full object-cover" />
+              <div className="w-full h-full bg-slate-900 flex items-center justify-center overflow-hidden rounded-2xl">
+                <div className="relative inline-block">
+                  <img src={image} alt="Selected fruit" className="max-w-full max-h-[400px] object-contain block" />
+                  {result && result.fruits.map((fruit, idx) => {
+                    const { ymin, xmin, ymax, xmax } = fruit.boundingBox;
+                    // Normalized 0-1000 to 0-100%
+                    const top = (ymin + ymax) / 20; 
+                    const left = (xmin + xmax) / 20;
+                    return (
+                      <div 
+                        key={idx}
+                        className="absolute size-6 -ml-3 -mt-3 bg-[#25f447] text-slate-900 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-lg z-20"
+                        style={{ top: `${top}%`, left: `${left}%` }}
+                      >
+                        {idx + 1}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
               <div className="relative z-10 flex flex-col items-center text-center p-6">
                 <div className="bg-white p-4 rounded-full mb-4 shadow-sm text-[#25f447]">
@@ -219,25 +238,30 @@ export function Scanner() {
                 fruit.isRotted ? "border-red-500 bg-red-50" : "border-slate-100"
               }`}>
                 <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                      {fruit.fruitName}
-                      {fruit.isRotted && (
-                        <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Rotted</span>
-                      )}
-                    </h4>
-                    <p className={`text-sm font-bold ${
-                      fruit.qualityLevel === "High" ? "text-[#25f447]" : 
-                      fruit.qualityLevel === "Moderate" ? "text-yellow-500" : "text-red-500"
-                    }`}>
-                      {fruit.qualityLevel} Quality
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="size-6 shrink-0 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                        {fruit.fruitName}
+                        {fruit.isRotted && (
+                          <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Rotted</span>
+                        )}
+                      </h4>
+                      <p className={`text-sm font-bold ${
+                        fruit.qualityLevel === "Good" ? "text-[#25f447]" : 
+                        fruit.qualityLevel === "Moderate" ? "text-yellow-500" : "text-red-500"
+                      }`}>
+                        {fruit.qualityLevel} Quality
+                      </p>
+                    </div>
                   </div>
                   <div className="relative flex items-center justify-center">
                     <svg className="size-12 transform -rotate-90">
                       <circle className="text-slate-100" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" strokeWidth="4"></circle>
                       <circle 
-                        className={fruit.qualityLevel === "High" ? "text-[#25f447]" : fruit.qualityLevel === "Moderate" ? "text-yellow-500" : "text-red-500"} 
+                        className={fruit.qualityLevel === "Good" ? "text-[#25f447]" : fruit.qualityLevel === "Moderate" ? "text-yellow-500" : "text-red-500"} 
                         cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" strokeWidth="4"
                         strokeDasharray="125.6" 
                         strokeDashoffset={125.6 - (125.6 * fruit.score) / 100}

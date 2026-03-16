@@ -1,9 +1,15 @@
 export interface FruitAnalysis {
   fruitName: string;
-  qualityLevel: "High" | "Moderate" | "Bad";
+  qualityLevel: "Good" | "Moderate" | "Bad";
   score: number;
   description: string;
   isRotted: boolean;
+  boundingBox: {
+    ymin: number;
+    xmin: number;
+    ymax: number;
+    xmax: number;
+  };
 }
 
 export interface ScanHistoryItem {

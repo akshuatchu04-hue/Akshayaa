@@ -97,10 +97,10 @@ export default function App() {
             >
               <h3 className="text-xl font-bold mb-4">About Fruit Vitality</h3>
               <p className="text-slate-600 mb-4">
-                This app uses advanced AI to analyze the external appearance of fruits (color, texture, size, shape) to determine their freshness and quality.
+                This system uses Computer Vision and Deep Learning models (CNN, YOLOv8) to identify fruits and determine their quality.
               </p>
               <p className="text-slate-600 mb-6">
-                Our goal is to provide an unbiased grading system to help consumers make informed decisions.
+                It can automatically detect multiple fruits in a single image, marking each with an indicator and classifying them as Good, Moderate, or Bad.
               </p>
               <button 
                 onClick={() => setShowInfo(false)}

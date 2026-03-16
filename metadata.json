@@ -1,6 +1,6 @@
 {
   "name": "Fruit Vitality",
-  "description": "Automated fruit quality grading system using AI to assess freshness based on visual features.",
+  "description": "A Computer Vision system utilizing Deep Learning and YOLOv8 architectures (CNN) to detect and grade the quality of individual fruits in groups.",
   "requestFramePermissions": [
     "camera"
   ]
