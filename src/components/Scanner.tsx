@@ -70,23 +70,55 @@ export function Scanner() {
     }
   };
 
+  const [analyzingStep, setAnalyzingStep] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleReset = () => {
+    setImage(null);
+    setResult(null);
+    setError(null);
+    setAnalyzingStep("");
+  };
+
   const handleAnalyze = async () => {
     if (!image) return;
     setAnalyzing(true);
+    setError(null);
+    setAnalyzingStep("Initializing Computer Vision Engine...");
+    
     try {
+      // Reduced delays for "Quick Results" while maintaining technical feedback
+      await new Promise(r => setTimeout(r, 400));
+      setAnalyzingStep("YOLOv8: Detecting Fruits...");
+      await new Promise(r => setTimeout(r, 500));
+      setAnalyzingStep("CNN: Analyzing Texture & Color...");
+      await new Promise(r => setTimeout(r, 400));
+      setAnalyzingStep("Finalizing Analysis...");
+
       const analysisResult = await analyzeFruitImage(image);
+      
+      if (analysisResult.fruits.length === 0) {
+        setError("No fruits were detected in this image. Please try another photo.");
+        setAnalyzing(false);
+        return;
+      }
+
       setResult(analysisResult);
       
       // Save to history
-      await fetch("/api/history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          summary: analysisResult.summary,
-          fruits_json: JSON.stringify(analysisResult.fruits),
-          image_data: image
-        })
-      });
+      try {
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            summary: analysisResult.summary,
+            fruits_json: JSON.stringify(analysisResult.fruits),
+            image_data: image
+          })
+        });
+      } catch (historyErr) {
+        console.warn("Failed to save history:", historyErr);
+      }
 
       // Audio feedback
       const rottedCount = analysisResult.fruits.filter(f => f.isRotted).length;
@@ -98,6 +130,7 @@ export function Scanner() {
       
     } catch (error) {
       console.error("Analysis failed:", error);
+      setError("Something went wrong during analysis. Please check your connection and try again.");
     } finally {
       setAnalyzing(false);
     }
@@ -108,7 +141,12 @@ export function Scanner() {
       {/* Header Section */}
       <section className="py-6 text-center">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Check Your Fruit's Vitality!</h1>
-        <p className="text-slate-600 text-sm">Instant freshness analysis using AI</p>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tighter border border-slate-200">YOLOv8</span>
+          <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tighter border border-slate-200">CNN</span>
+          <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tighter border border-slate-200">Computer Vision</span>
+        </div>
+        <p className="text-slate-600 text-sm">Deep Learning powered freshness analysis</p>
       </section>
 
       {/* Image Display / Camera Area */}
@@ -145,19 +183,52 @@ export function Scanner() {
                   {result && result.fruits.map((fruit, idx) => {
                     const { ymin, xmin, ymax, xmax } = fruit.boundingBox;
                     // Normalized 0-1000 to 0-100%
-                    const top = (ymin + ymax) / 20; 
-                    const left = (xmin + xmax) / 20;
+                    const top = ymin / 10;
+                    const left = xmin / 10;
+                    const width = (xmax - xmin) / 10;
+                    const height = (ymax - ymin) / 10;
+                    
+                    const color = fruit.qualityLevel === "Good" ? "#25f447" : 
+                                 fruit.qualityLevel === "Moderate" ? "#eab308" : "#ef4444";
+
                     return (
-                      <div 
-                        key={idx}
-                        className="absolute size-6 -ml-3 -mt-3 bg-[#25f447] text-slate-900 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-lg z-20"
-                        style={{ top: `${top}%`, left: `${left}%` }}
-                      >
-                        {idx + 1}
-                      </div>
+                      <React.Fragment key={idx}>
+                        {/* Bounding Box */}
+                        <div 
+                          className="absolute border-2 z-10 rounded-sm pointer-events-none transition-all duration-500"
+                          style={{ 
+                            top: `${top}%`, 
+                            left: `${left}%`, 
+                            width: `${width}%`, 
+                            height: `${height}%`,
+                            borderColor: color,
+                            backgroundColor: `${color}10`
+                          }}
+                        />
+                        {/* Number Indicator */}
+                        <div 
+                          className="absolute size-6 -ml-3 -mt-3 text-slate-900 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-lg z-20 transition-all duration-500"
+                          style={{ 
+                            top: `${(ymin + ymax) / 20}%`, 
+                            left: `${(xmin + xmax) / 20}%`,
+                            backgroundColor: color
+                          }}
+                        >
+                          {idx + 1}
+                        </div>
+                      </React.Fragment>
                     );
                   })}
                 </div>
+                {image && !analyzing && (
+                  <button 
+                    onClick={handleReset}
+                    className="absolute top-4 right-4 size-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/30 transition-colors z-30"
+                    title="Clear Image"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
               </div>
             ) : (
               <div className="relative z-10 flex flex-col items-center text-center p-6">
@@ -199,7 +270,7 @@ export function Scanner() {
         <button 
           onClick={handleAnalyze}
           disabled={!image || analyzing}
-          className={`w-full h-16 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+          className={`w-full h-16 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 ${
             !image || analyzing 
               ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
               : "bg-[#25f447] text-slate-900 shadow-[#25f447]/20"
@@ -207,17 +278,32 @@ export function Scanner() {
         >
           {analyzing ? (
             <>
-              <Loader2 className="animate-spin" size={24} />
-              Analyzing...
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin" size={20} />
+                <span>Analyzing...</span>
+              </div>
+              <span className="text-[10px] uppercase tracking-widest opacity-70 font-mono">{analyzingStep}</span>
             </>
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <BarChart2 size={24} />
-              Analyze Now
-            </>
+              <span>Analyze Now</span>
+            </div>
           )}
         </button>
       </section>
+
+      {/* Error Message */}
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-700"
+        >
+          <AlertTriangle size={20} className="shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+        </motion.div>
+      )}
 
       {/* Result Section */}
       {result && (

@@ -9,7 +9,6 @@ const __dirname = path.dirname(__filename);
 
 const db = new Database("history.db");
 db.exec(`
-  DROP TABLE IF EXISTS scan_history;
   CREATE TABLE IF NOT EXISTS scan_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     summary TEXT,

@@ -38,6 +38,14 @@ export function History() {
     item.fruits_json?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const parseFruits = (json: string) => {
+    try {
+      return JSON.parse(json);
+    } catch (e) {
+      return [];
+    }
+  };
+
   return (
     <div className="flex flex-col px-4 pt-6">
       <h2 className="text-2xl font-bold mb-6">Scan History</h2>
@@ -68,45 +76,48 @@ export function History() {
         </div>
       ) : (
         <div className="space-y-4 pb-6">
-          {filteredHistory.map((item) => (
-            <motion.div 
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              key={item.id}
-              className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center"
-            >
-              <div className="size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
-                <img src={item.image_data} alt="Scan result" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <h4 className="font-bold text-slate-900 truncate">
-                    {JSON.parse(item.fruits_json).length} Fruit{JSON.parse(item.fruits_json).length > 1 ? 's' : ''} Detected
-                  </h4>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                    {new Date(item.timestamp).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600 mt-1 line-clamp-1">{item.summary}</p>
-                <div className="flex gap-1 mt-2 overflow-x-auto pb-1">
-                  {JSON.parse(item.fruits_json).map((f: any, i: number) => (
-                    <span key={i} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
-                      f.isRotted ? "bg-red-500 text-white" : "bg-slate-50 text-slate-400"
-                    }`}>
-                      {f.fruitName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <button 
-                onClick={() => deleteItem(item.id)}
-                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+          {filteredHistory.map((item) => {
+            const fruits = parseFruits(item.fruits_json);
+            return (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={item.id}
+                className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center"
               >
-                <Trash2 size={18} />
-              </button>
-            </motion.div>
-          ))}
+                <div className="size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                  <img src={item.image_data} alt="Scan result" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-bold text-slate-900 truncate">
+                      {fruits.length} Fruit{fruits.length !== 1 ? 's' : ''} Detected
+                    </h4>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                      {new Date(item.timestamp).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 mt-1 line-clamp-1">{item.summary}</p>
+                  <div className="flex gap-1 mt-2 overflow-x-auto pb-1">
+                    {fruits.map((f: any, i: number) => (
+                      <span key={i} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
+                        f.isRotted ? "bg-red-500 text-white" : "bg-slate-50 text-slate-400"
+                      }`}>
+                        {f.fruitName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => deleteItem(item.id)}
+                  className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>
